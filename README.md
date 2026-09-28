@@ -6,6 +6,8 @@
 
 授权验证通过后，默认将 Token 保存到中控的 `/etc/s-ui/github/ridd1e1337/s-ui-fleet.token`，文件权限 `0600`、专用目录权限 `0700`，仅 root 可读。以后运行本安装命令或 `s-ui update` 会自动复用；过期或失去权限时才需要重新输入。Token 不预置在脚本中，不下发节点，也不进入业务备份。
 
+如果环境中的 `GH_TOKEN` / `GITHUB_TOKEN` 已失效或没有仓库权限，脚本会尝试此仓库已保存的授权；网络故障或限流不会切换、删除授权。显式 `--github-token-fd` 和 `--no-save-token` 不启用此回退。
+
 支持 root 终端；中控推荐 Debian 12 / 13、Ubuntu 22.04+，需要 systemd。自动申请证书时域名须解析到服务器，公网 TCP 80 空闲且可达，TCP 443 放行。
 
 ```bash

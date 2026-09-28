@@ -120,6 +120,21 @@ fleet_download_entry() {
   if fleet_status=$(printf 'Authorization: Bearer %s\n' "$fleet_pat" | curl -q --proto '=https' --fail --silent --show-error --connect-timeout 15 --max-time 60 --header @- --header 'Accept: application/vnd.github.raw+json' --header 'X-GitHub-Api-Version: 2022-11-28' --output "$fleet_script" --write-out '%{http_code}' 'https://api.github.com/repos/ridd1e1337/s-ui-fleet/contents/install.sh?ref=main'); then fleet_curl_status=0; else fleet_curl_status=$?; fi;
 };
 fleet_download_entry;
+if [[ $fleet_source == environment && $fleet_no_save != true && ( $fleet_status == 401 || $fleet_status == 404 ) && ( $fleet_curl_status == 0 || $fleet_curl_status == 22 ) ]]; then
+  unset fleet_previous_pat;
+  fleet_previous_pat=$fleet_pat;
+  if fleet_read_saved; then
+    fleet_source=saved;
+    if [[ $fleet_pat != "$fleet_previous_pat" ]]; then
+      printf '%s\n' '环境中的 GitHub 凭据无法下载，正在复用此仓库已保存的凭据。';
+      fleet_download_entry;
+    fi;
+  else
+    fleet_saved_status=$?;
+    [[ $fleet_saved_status == 1 ]] || { printf '%s\n' '已保存的 GitHub 凭据路径、权限或格式不安全，拒绝读取。' >&2; exit 1; };
+  fi;
+  unset fleet_previous_pat;
+fi;
 if [[ $fleet_source == saved && ( $fleet_status == 401 || $fleet_status == 404 ) && ( $fleet_curl_status == 0 || $fleet_curl_status == 22 ) ]]; then
   printf '%s\n' '已保存的 GitHub 凭据已失效或无仓库权限，请重新输入一次；新凭据通过仓库授权验证后才会替换旧值。' >&2;
   fleet_prompt_token;
